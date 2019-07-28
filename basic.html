@@ -161,16 +161,10 @@ let add = function(a, b) {
 console.log(add(10, 5));
 
 // 2) curry를 통한 add 함수
-function _curry(fn) {
-  return function(a, b) {
-    // 인자가 2개 들어오면 한 번에 바로 리턴하고
-    // 그렇지 않으면 미뤄두었다가 다음번 재 호출 때 리턴한다.
-    // Javascript의 클로져를 이용
-    return arguments.length == 2 ? fn(a, b) : function(b) { return fn(a, b); };
-  }
-}
+// 구현부
+// "_.js"파일로 이동함.
 
-
+// 실행부
 let curry_add = _curry(function(a, b) {
   return a + b;
 })
@@ -193,7 +187,10 @@ let sub10 = curry_sub(10);
 console.log( sub10(5) );
 
 // 3) curryr
-// 위 의미를 제대로 적용하기 위해 curryr(여기서 r은 right오른쪽을 의미한다.)
+// 구현부
+// "_.js"파일로 이동함.
+
+// 실행부
 function _curryr(fn) {
   return function(a, b) {
     // 인자가 2개 들어오면 기존 curry와 같은 순서로 가며
@@ -230,9 +227,10 @@ console.log(basic_get(user2, 'name'));
 
 
 // 2) curryr_get
-let _get = _curryr(function(obj, key) {
-  return obj == null ? undefined : obj[key];
-});
+// 구현부
+// "_.js"파일로 이동함.
+
+// 실행부
 
 let get_name = _get('name');
 console.log( get_name(user1) );
@@ -251,6 +249,138 @@ console.log(
   _map(
     _filter(users, function(user) { return user.age < 30; }),
     _get('age')));
+
+
+console.clear();
+/*****************************************
+  8. reduce (축약)
+  : 인자를 받아서 해당 인자를 특정 규칙에 맞게 축약하여 내뱉는다.
+  흔히는 Array를 넣어서 값을 하나 리턴 받는 식으로 동작한다.
+*****************************************/
+// function _reduce(list, iter, memo) {
+//   _each(list, function(val) {
+//     memo = iter(memo, val);
+//   })
+//   return memo;
+// }
+// 위 코드는 반드시 세번째 인자인 memo를 필요로 함으로
+// 세번째 인자를 생략가능한 아래의 코드로 수정한다.
+
+/*
+  이를 위해선 아래의 slice함수를 준비해야한다.
+  아래의 함수는 Array객체에 존재하는 메소드인 slice함수를
+  뽑아낸다.
+  이 후 이 함수를 사용할때는 call을 이용하면 된다.
+*/
+var slice = Array.prototype.slice;
+function _rest(list, num) {
+  return slice.call(list, num || 1); // num이 없으면 1을 기본값으로 한다.
+}
+
+function _reduce(list, iter, memo) {
+  if (arguments.length == 2) {
+    memo = list[0];
+    list = _rest(list);
+  }
+  _each(list, function(val) {
+    memo = iter(memo, val);
+  })
+  return memo;
+}
+
+console.log(
+  _reduce([1, 2, 3], add, 0));
+
+console.log(
+  _reduce([1, 2, 3, 4], add));
+
+
+/*****************************************
+ * TODO: pipe부터 다시 리뷰해보기
+  9. reduce의 활용 pipe
+  : 함수들을 인자로 받아서 이 함수들을 연속적으로 실행해준다.
+  pipe함수는 함수를 리턴한다.
+  pipe는 reduce를 보다 구체화 한 함수로 볼 수 있다.
+*****************************************/
+function _pipe() {
+  var fns = arguments; // **이를 통해 인자를 제한하지 않고 넣을 수 있다.
+  return function(arg) {
+    return _reduce(fns, function(arg, fn) {
+      return fn(arg);
+    }, arg)
+  }
+}
+
+let f1 = _pipe(
+  function(a) { return a + 1; },
+  function(a) { return a * 2; },
+  function(a) { return a * a; }
+);
+
+console.log( f1(1) );
+
+/*****************************************
+  10. reduce의 활용 go
+  : 즉시실행되는 pipe함수라고 볼 수 있다.
+*****************************************/
+function _go(arg) {
+  let fns = _rest(arguments);
+  return _pipe.apply(null, fns)(arg);
+}
+
+_go(1,
+  function(a) { return a + 1; },
+  function(a) { return a * 2; },
+  function(a) { return a * a; },
+  console.log);
+
+console.log(
+  _map(
+    _filter(users, function(user) { return user.age >= 30; }),
+    _get('name')));
+
+console.log(
+  _map(
+    _filter(users, function(user) { return user.age < 30; }),
+    _get('age')));
+
+// go를 이용하기
+// 1)
+_go(users,
+  function(users) {
+    return _filter(users, function(user) {
+      return user.age >= 30;
+    });
+  },
+  function(users) {
+    return _map(users, _get('name'));
+  },
+  console.log);
+
+_go(users,
+  function(users) {
+    return _filter(users, function(user) {
+      return user.age < 30;
+    });
+  },
+  function(users) {
+    return _map(users, _get('age'));
+  },
+  console.log);
+
+// 2) curryr을 통해 보다 간결하게하기
+var _map = _curryr(_map), 
+    _filter = _curryr(_filter);
+
+_go(users,
+  _filter(function(user) { return user.age >= 30; }),
+  _map(_get('name')),
+  console.log);
+
+_go(users,
+  _filter(user => user.age < 30),
+  _map(_get('age')),
+  console.log);
 
 </script>
 </body>
