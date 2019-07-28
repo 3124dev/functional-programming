@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="keywords" content="인프런, 함수형-프로그래밍">
+<title>Hello Functional programming</title>
+</head>
+<body>
+<script src="_.js"></script>
+<script>
+users = [
+  { id: 1, name: 'AB', age: 31 },
+  { id: 2, name: 'CD', age: 32 },
+  { id: 3, name: 'EF', age: 33 },
+  { id: 4, name: 'GH', age: 35 },
+  { id: 5, name: 'IJ', age: 29 },
+  { id: 6, name: 'KL', age: 24 },
+  { id: 7, name: 'MN', age: 31 },
+  { id: 8, name: 'OP', age: 23 }
+];
+
+/*****************************************
+  1. 명령형 코드
+*****************************************/
+// 1) 30세 이상인 users를 거른다.
+let temp_users = [];
+for (let i = 0; i < users.length; i++) {
+  if (users[i].age >= 30) {
+    temp_users.push(users[i]);
+  }
+}
+console.log(temp_users);
+
+// 2) 30세 이상인 users의 names를 수집한다.
+const names = [];
+for (let i = 0; i < temp_users.length; i++) {
+  names.push(temp_users[i].name);
+}
+console.log(names);
+
+// 3) 30세 미만인 users를 거른다.
+let temp_users2 = [];
+for (let i = 0; i < users.length; i++) {
+  if (users[i].age < 30) {
+    temp_users2.push(users[i]);
+  }
+}
+console.log(temp_users2);
+
+// 4) 30세 미만인 users의 ages를 수집한다.
+const ages = [];
+for (let i = 0; i < temp_users2.length; i++) {
+  ages.push(temp_users2[i].age);
+}
+console.log(ages);
+
+
+/*****************************************
+  2. 함수형 코드
+  : 다형성이 매우 높다.(관심사의 분리)
+  재사용성이 높다.
+*****************************************/
+/* 1) _filter, _map으로 리펙토링
+      아래의 _filter 함수는 응용형 함수로 
+      함수가 함수를 받아서
+      원하는 시점에 해당하는 함수가 알고있는 인자를
+      적용하는 것을 말한다.
+      ≒ 적용형 함수 
+      ≒ 고차함수(함수를 인자로 받거나 함수를 리턴하거나 함수안에서 인자로 받은 함수를 실행하는 함수)
+*/
+// 구현부
+// "_.js"파일로 이동함.
+
+// 실행부
+let over_30 = _filter(users, function(user) { return user.age >= 30; })
+console.log(over_30);
+
+let f_names = _map(over_30, function(user) {
+  return user.name;
+})
+console.log(f_names);
+
+let under_30 = _filter(users, function(user) { return user.age < 30; });
+console.log(under_30);
+
+let f_ages = _map(under_30, function(user) {
+  return user.age;
+})
+console.log(f_ages);
+
+/* 더 간결화한 실행부
+  : 아래의 코드는 위 실행부와 비교하여 더 간결할 뿐만아니라
+  코드 중간에 변화가 없어서 무결성이 강조된다.
+*/ 
+console.log(
+  _map(
+    _filter(users, function(user) { return user.age >= 30; }),
+    function(user) { return user.name; }));
+
+console.log(
+  _map(
+    _filter(users, function(user) { return user.age < 30; }),
+    function(user) { return user.age; }));
+
+// console.log(
+//   _filter([1, 2, 3, 4], function(num) { return num % 2; }));
+
+// console.log(
+//   _filter([1, 2, 3, 4], function(num) { return !(num % 2); }));
+
+
+/*****************************************
+  3. 객체지향 함수에서 사용되는 메소드와의 차이
+  : 본래 존재하는 map과 filter 메소드는 Array의 메소드로
+  오직 Array에만 사용할 수 있다.
+  여기서 위에서 사용한 _map함수와 차이점이 생긴다.
+*****************************************/
+
+// 좀 더 살펴보면 아래의 코드를 출력시 Array 처럼 보이지만 사실 Array는 아니다.
+console.log(document.querySelectorAll('*'));
+// 때문에 아래 코드처럼 map사용이 불가능하다.
+// console.log(document.querySelectorAll('*').map(function(node) {return node.nodeName}));
+// 하지만 앞서 만들어둔 _map으로는 가능하다.
+console.log(
+  _map(document.querySelectorAll('*'), function(node) {
+    return node.nodeName;
+  })
+);
+/* 즉 함수형 프로그래밍인 _map함수의 경우 받는 인자가 무엇인지 보다
+인자가 _map함수의 조건에만 부합한다면 사용이 가능한 것이다.
+위 조건은 "length가 있고", "length가 숫자로 표현된다."가 전부이다.
+*/ 
+
+/*****************************************
+  4. 객체지향과 함수형의 차이
+  : 객체지향은 해당 객체의 형태가 먼저 존재하며, 객체를 생성한 뒤에 사용가능하다.
+  하지만 함수형에서는 함수가 먼저 존재항여 해당 함수의 조건에만 부합한다면
+  어떤 인자(객체)가 주어지더라도 사용가능하기 때문에 재활용성이 높다.(다형성이 좋다)
+*****************************************/
+
+/*****************************************
+  5. 내부 다형성 (응용형 함수의 장점)
+  : predicate, iter, mapper (대표적인 보조함수들)
+  콜백함수는 무조건 어떤 일들을 다 수행하고 다시 돌려주는 뜻이므로 너무 포괄적이다,
+  함수형 프로그래밍에서는 이러한 콜백함수를 기능별로 보다 세분화할 수 있는데
+  predicate - 조건에 맞춰 리턴
+  iter - 모두 돌면서 반복적으로 수행
+  mapper - 맵핑하여 리턴
+*****************************************/
+
+/*****************************************
+  6. Curry
+  : 함수 본체를 실행하는 기법으로
+  본체함수를 값으로 들고 있다가 원하는 시점까지 미뤄둔 후 최종적으로 평가한다.
+  이를 통해 함수를 *조합해나가며 사용할 수 있다.
+*****************************************/
+// 1) 일반적인 add 함수
+let add = function(a, b) {
+  return a + b;
+}
+console.log(add(10, 5));
+
+// 2) curry를 통한 add 함수
+function _curry(fn) {
+  return function(a, b) {
+    // 인자가 2개 들어오면 한 번에 바로 리턴하고
+    // 그렇지 않으면 미뤄두었다가 다음번 재 호출 때 리턴한다.
+    // Javascript의 클로져를 이용
+    return arguments.length == 2 ? fn(a, b) : function(b) { return fn(a, b); };
+  }
+}
+
+
+let curry_add = _curry(function(a, b) {
+  return a + b;
+})
+let add10 = curry_add(10);
+// add10은 function(b) { return fn(10, b)}; 가 된다.
+// 그리고 fn(10, b)는 이전에 _curry_add를 생성할 때 입력한 함수
+// function(10, b) { return 10 + b} 로 되어있다.
+// 즉 add 10은 인자가 덜 채워진 함수로 다시 한 번 인자를 받아야 실행된다.
+console.log( add10(5) );
+console.log( curry_add(5)(3) );
+console.log( curry_add(5, 3) );
+
+let curry_sub = _curry(function(a, b) {
+  return a - b;
+})
+console.log( curry_sub(10, 5) );
+// 아래의 코드는 표현이 애매하다.
+let sub10 = curry_sub(10);
+// 10에 5를 뺀다는 의미가 적어지기 때문이다.
+console.log( sub10(5) );
+
+// 3) curryr
+// 위 의미를 제대로 적용하기 위해 curryr(여기서 r은 right오른쪽을 의미한다.)
+function _curryr(fn) {
+  return function(a, b) {
+    // 인자가 2개 들어오면 기존 curry와 같은 순서로 가며
+    // 그렇지 않은 경우 기존 curry와 다른 순서로 간다.
+    return arguments.length == 2 ? fn(a, b) : function(b) { return fn(b, a); };
+  }
+}
+
+let curryr_sub = _curryr(function(a, b) {
+  return a - b;
+})
+let r_sub10 = curryr_sub(10);
+// 이제 우리의 코드는 5에 sub10을 하게 되어 -5로 나온다(표현된 이름에 더 잘 맞는다.)
+console.log( r_sub10(5) );
+
+
+/*****************************************
+  7. get과 curry
+*****************************************/
+// 1) get
+function basic_get(obj, key) {
+  return obj == null ? undefined : obj[key];
+}
+
+let user1 = users[0];
+console.log(user1.name);
+console.log(basic_get(user1, 'name'));
+
+let user2 = users[10];
+// 아래의 코드는 없는 객체의 name을 호출하여 에러가 난다.
+// console.log(user2.name);
+// 하지만 아래의 코드는 에러 대신 undefined를 리턴하기 때문에 보다 안전하다.
+console.log(basic_get(user2, 'name'));
+
+
+// 2) curryr_get
+let _get = _curryr(function(obj, key) {
+  return obj == null ? undefined : obj[key];
+});
+
+let get_name = _get('name');
+console.log( get_name(user1) );
+console.log( get_name(users[3]) );
+console.log( get_name(users[4]) );
+
+// _get을 통해 위에 만들었던 _map을 보다 간결하고 직관적으로 만들 수 있다.
+console.log(
+  _map(
+    _filter(users, function(user) { return user.age >= 30; }),
+    // function(user) { return user.name; }));
+    // 위 내용을 아래처럼 바꿀 수 있다.
+    _get('name')));
+
+console.log(
+  _map(
+    _filter(users, function(user) { return user.age < 30; }),
+    _get('age')));
+
+</script>
+</body>
+</html>
